@@ -1,0 +1,10 @@
+Set up openCV window:
+
+Linker:
+AdditionalLibraryDirectories = C:\openCV_root\opencv\build\x64\vc15\lib
+C/C++:
+AdditionalIncludeDirectories = C:\openCV_root\opencv\build\include
+Debugging:
+Environment = PATH=C:\openCV_root\opencv\build\x64\vc15\bin
+
+Copy opencv_world440.lib, opencv_world440d.lib into the project
