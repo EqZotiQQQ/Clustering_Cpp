@@ -15,7 +15,7 @@ Processor::Processor(const int cols,
                 const std::string& window_name):
     image(cv::Mat(cols, rows, CV_8UC3, cv::Scalar(0, 0, 0))),
     cluster_cnt(cluster_cnt),
-    run_type(run_type),
+    run_type(type),
     clust_window_name(window_name)
 {
 }
@@ -25,34 +25,35 @@ Processor::~Processor() {
 }
 
 void Processor::process() noexcept {
+    std::thread worker;
     bool lunch_status{ true };
     cv::namedWindow(clust_window_name, cv::WINDOW_AUTOSIZE);
-    show(image);
+    cv::imshow(clust_window_name, image);
 
     while (lunch_status) {  // main loop
-        if (this->run_type == RUN_TYPE::STATIC) {
-            static_process();
+        std::cout << "worker" << (int)run_type << std::endl;
+        if (run_type == RUN_TYPE::LATENCY_FLOW) {
+            worker = std::thread([this] {this->latency_flow(); });
             lunch_status = false;
         }
         auto c = cv::waitKey(0);
         if (c == 27) {
             lunch_status = false;
+            if (worker.joinable()) {
+                worker.detach();
+            }
         }
     }
 }
 
-void Processor::static_process() noexcept {
+void Processor::latency_flow() noexcept {
     for (int i = 0; i < 50; ++i) {
         dots.push_back({ rand() % image.cols - 10, rand() % image.rows - 10 });
     }
     kmeans();
     print_connections();
     draw_elements();
-    show(image);
-}
-
-void Processor::show(const cv::Mat& img) const noexcept {
-    cv::imshow(clust_window_name, img);
+    cv::imshow(clust_window_name, image);
 }
 
 void Processor::print_dots() const noexcept {
@@ -70,21 +71,40 @@ void Processor::print_centoids_pos() const noexcept {
 bool Processor::kmeans() noexcept {
     random_init_centroids();
     double epsilon = 1; // dunno tmp value.
-    double difference = calculate_distances();
-    return true;
-    while (epsilon >= difference) { // main process loop
-        update_centroids();
-        difference = calculate_distances();
+    double centroid_offset = 500;
+    calculate_distances();
+    while (epsilon <= centroid_offset) { // main process loop
+        image = cv::Mat(image.rows, image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        printf("offset = %f\n", centroid_offset);
+        centroid_offset = update_centroids();
+        calculate_distances();
+        print_centoids_pos();
+        print_connections();
+        draw_elements();
+        //std::this_thread::sleep_for(std::chrono::seconds(2));
+        print_connections();
+        draw_elements();
+        cv::imshow(clust_window_name, image);
     }
+    printf("offset = %f\n", centroid_offset);
+
+    return true;
 }
 
-void Processor::update_centroids() noexcept {
-    int x = 0, y = 0;
+double Processor::update_centroids() noexcept {
+    double offset = 0;
     for (auto iter = centroids.begin(); iter != centroids.end(); ++iter) {
+        int x = 0, y = 0;
         for (auto clust = iter->cluster.begin(); clust != iter->cluster.end(); ++clust) {
-            
+            x += clust->first;
+            y += clust->second;
         }
+        x /= iter->cluster.size();
+        y /= iter->cluster.size();
+        offset += abs(iter->pos.first - x) + abs(iter->pos.second - y);
+        iter->pos = std::make_pair(x, y);
     }
+    return offset;
 }
 
 void Processor::random_init_centroids() noexcept {
@@ -93,7 +113,7 @@ void Processor::random_init_centroids() noexcept {
     }
 }
 
-double Processor::calculate_distances() noexcept {
+void Processor::calculate_distances() noexcept {
     for (auto it_dot = dots.begin(); it_dot != dots.end(); ++it_dot) {
         double min_distance = -1;
         Centroid* centroid = nullptr;
@@ -108,7 +128,6 @@ double Processor::calculate_distances() noexcept {
         it_dot->centr_dist = min_distance;
         centroid->cluster.push_back(it_dot->pos);
     }
-    return 0;   // should return centoid offset from previous position
 }
 
 void Processor::draw_elements() const noexcept {
