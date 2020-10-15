@@ -6,6 +6,7 @@
 #include "opencv2/highgui.hpp"
 
 #include <numeric>
+#include <random>
 
 
 Processor::Processor(const int rows,
@@ -47,13 +48,21 @@ void Processor::process() noexcept {
 }
 
 void Processor::latency_flow() noexcept {
+    std::random_device rand_dev;
+    std::mt19937 gen(rand_dev());
+    std::uniform_int_distribution<> rand_rows(0, image.cols);
+    std::uniform_int_distribution<> rand_cols(0, image.rows);
     for (int i = 0; i < 500; ++i) {
-        dots.push_back({ rand() % image.cols - 10, rand() % image.rows - 10 });
+        int x = rand_rows(gen);
+        int y = rand_cols(gen);
+        if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot & dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
+            i--;
+            std::cout << "skip\n";
+            continue;
+        }
+        dots.push_back({ x, y });
     }
     kmeans();
-    print_connections();
-    draw_elements();
-    cv::imshow(clust_window_name, image);
 }
 
 void Processor::print_dots() const noexcept {
@@ -96,8 +105,8 @@ double Processor::update_centroids() noexcept {
     for (auto iter = centroids.begin(); iter != centroids.end(); ++iter) {
         int x = 0, y = 0;
         for (auto clust = iter->cluster.begin(); clust != iter->cluster.end(); ++clust) {
-            x += clust->first;
-            y += clust->second;
+            x += (*clust)->pos.first;
+            y += (*clust)->pos.second;
         }
         x /= iter->cluster.size();
         y /= iter->cluster.size();
@@ -108,12 +117,28 @@ double Processor::update_centroids() noexcept {
 }
 
 void Processor::random_init_centroids() noexcept {
+    std::random_device rand_dev;
+    std::mt19937 gen(rand_dev());
+    std::uniform_int_distribution<> rand_rows(0, image.cols);
+    std::uniform_int_distribution<> rand_cols(0, image.rows);
     for (int i = 0; i < cluster_cnt; ++i) {
-        centroids.push_back({ rand() % image.cols - 10, rand() % image.rows - 10 });
+        int x = rand_rows(gen);
+        int y = rand_cols(gen);
+        if (std::find_if(centroids.cbegin(), centroids.cend(), [x = x, y = y](const Centroid & cent) {return cent.pos.first == x && cent.pos.second == y; }) != centroids.cend()) {
+            i--;
+            std::cout << "skip\n";
+            continue;
+        }
+        dots.push_back({ x, y });
+
+        centroids.push_back({ rand_rows(gen), rand_cols(gen) });
     }
 }
 
 void Processor::calculate_distances() noexcept {
+    for (auto it_centr = centroids.begin(); it_centr != centroids.end(); ++it_centr) {
+        it_centr->cluster.clear();
+    }
     for (auto it_dot = dots.begin(); it_dot != dots.end(); ++it_dot) {
         double min_distance = -1;
         Centroid* centroid = nullptr;
@@ -126,7 +151,7 @@ void Processor::calculate_distances() noexcept {
         }
         it_dot->owner = centroid;
         it_dot->centr_dist = min_distance;
-        centroid->cluster.push_back(it_dot->pos);
+        centroid->cluster.push_back(&(*it_dot));
     }
 }
 

@@ -20,9 +20,9 @@ enum class RUN_TYPE {
 
 class Processor {
 public:
-    Processor(const int rows = 600,
-                    const int columns = 1200,
-                    const int cluster_cnt = 3,
+    Processor(const int rows = 1000,
+                    const int columns = 1400,
+                    const int cluster_cnt = 20,
                     const RUN_TYPE type = RUN_TYPE::LATENCY_FLOW,
                     const std::string& window_name = "Clustering");
     ~Processor();
