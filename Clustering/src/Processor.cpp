@@ -8,12 +8,12 @@
 #include <numeric>
 
 
-Processor::Processor(const int cols,
-                const int rows,
+Processor::Processor(const int rows,
+                const int columns,
                 const int cluster_cnt,
                 const RUN_TYPE type,
                 const std::string& window_name):
-    image(cv::Mat(cols, rows, CV_8UC3, cv::Scalar(0, 0, 0))),
+    image(cv::Mat(rows, columns, CV_8UC3, cv::Scalar(0, 0, 0))),
     cluster_cnt(cluster_cnt),
     run_type(type),
     clust_window_name(window_name)
@@ -47,7 +47,7 @@ void Processor::process() noexcept {
 }
 
 void Processor::latency_flow() noexcept {
-    for (int i = 0; i < 50; ++i) {
+    for (int i = 0; i < 500; ++i) {
         dots.push_back({ rand() % image.cols - 10, rand() % image.rows - 10 });
     }
     kmeans();
@@ -81,7 +81,7 @@ bool Processor::kmeans() noexcept {
         print_centoids_pos();
         print_connections();
         draw_elements();
-        //std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         print_connections();
         draw_elements();
         cv::imshow(clust_window_name, image);
@@ -92,7 +92,7 @@ bool Processor::kmeans() noexcept {
 }
 
 double Processor::update_centroids() noexcept {
-    double offset = 0;
+    int offset = 0;
     for (auto iter = centroids.begin(); iter != centroids.end(); ++iter) {
         int x = 0, y = 0;
         for (auto clust = iter->cluster.begin(); clust != iter->cluster.end(); ++clust) {
