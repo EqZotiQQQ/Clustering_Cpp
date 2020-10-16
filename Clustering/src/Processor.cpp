@@ -7,6 +7,7 @@
 
 #include <numeric>
 #include <random>
+#include <algorithm>
 
 
 Processor::Processor(const int rows, const int columns, const int cluster_cnt, const RUN_TYPE type, const std::string& window_name):
@@ -91,6 +92,7 @@ bool Processor::kmeans_realtime() noexcept {
     double epsilon = 1;
     double centroid_offset;
     link_cluster_and_elements();
+
     do {
         image = cv::Mat(image.rows, image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
         centroid_offset = update_centroids();
@@ -169,32 +171,12 @@ void Processor::random_init_centroids() noexcept {
     for (int i = 0; i < cluster_cnt; ++i) {
         int x = rand_rows(gen);
         int y = rand_cols(gen);
-        if (std::find_if(clusters.cbegin(), clusters.cend(), [x = x, y = y](const Centroid & cent) {return cent.pos.first == x && cent.pos.second == y; }) != clusters.cend()) {
+        if (std::find_if(clusters.cbegin(), clusters.cend(), [x = x, y = y](const Centroid& cent) {return cent.pos.first == x && cent.pos.second == y; }) != clusters.cend()) {
             i--;
             std::cout << "skip\n";
             continue;
         }
         clusters.push_back({ rand_rows(gen), rand_cols(gen) });
-    }
-}
-
-void Processor::link_first() noexcept {
-    for (auto it_centr = clusters.begin(); it_centr != clusters.end(); ++it_centr) {
-        it_centr->cluster.clear();
-    }
-    for (auto it_dot = dots.begin(); it_dot != dots.end(); ++it_dot) {
-        double min_distance = -1;
-        Centroid* centroid = nullptr;
-        for (auto it_centr = clusters.begin(); it_centr != clusters.end(); ++it_centr) {
-            double distance = std::sqrt(std::pow(it_centr->pos.first - it_dot->pos.first, 2) + std::pow(it_centr->pos.second - it_dot->pos.second, 2));
-            if ((min_distance == -1 || min_distance > distance)) {
-                centroid = &(*it_centr);
-                min_distance = distance;
-            }
-        }
-        it_dot->owner = centroid;
-        it_dot->centr_dist = min_distance;
-        centroid->cluster.push_back(&(*it_dot));
     }
 }
 
@@ -216,6 +198,25 @@ void Processor::link_cluster_and_elements() noexcept {
         it_dot->owner = centroid;
         it_dot->centr_dist = min_distance;
         centroid->cluster.push_back(&(*it_dot));
+    }
+    /*Make USSR Great again. Joke just its bad when cluster contains 0 elems.*/
+    for (auto centroid = clusters.begin(); centroid != clusters.end(); ++centroid) {
+        if (centroid->cluster.size() == 0) {
+            double min_distance = -1;
+            Dot* move_dot = nullptr;
+            for (auto it_dot = dots.begin(); it_dot != dots.end(); ++it_dot) {
+                double distance = std::sqrt(std::pow(centroid->pos.first - it_dot->pos.first, 2) + std::pow(centroid->pos.second - it_dot->pos.second, 2));
+                if ((min_distance == -1 || min_distance > distance) && (it_dot->owner->cluster.size() > 1)) {
+                    move_dot = &(*it_dot);
+                    min_distance = distance;
+                }
+            }
+            Centroid* prev_owner = move_dot->owner;
+            move_dot->owner = &(*centroid);
+            auto it = std::find(prev_owner->cluster.begin(), prev_owner->cluster.end(), &*move_dot);
+            prev_owner->cluster.erase(it);
+            centroid->cluster.push_back(move_dot);
+        }
     }
 }
 

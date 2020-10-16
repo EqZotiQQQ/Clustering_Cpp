@@ -37,7 +37,6 @@ private:
     bool kmeans_realtime() noexcept;
     void random_init_centroids() noexcept;
     void link_cluster_and_elements() noexcept;
-    void link_first() noexcept;
     void draw_elements() const noexcept;
     void draw_connections() noexcept;
     double update_centroids() noexcept;
