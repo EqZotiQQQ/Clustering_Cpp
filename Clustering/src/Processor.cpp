@@ -71,12 +71,10 @@ void Processor::latency_flow() noexcept {
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, image.cols);
     std::uniform_int_distribution<> rand_cols(0, image.rows);
-    for (int i = 0; i < 50; ++i) {
+    while(true) {
         int x = rand_rows(gen);
         int y = rand_cols(gen);
         if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot & dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
-            i--;
-            std::cout << "skip\n";
             continue;
         }
         dots.push_back({ x, y });
@@ -99,7 +97,7 @@ bool Processor::kmeans_realtime() noexcept {
         printf("offset = %f\n", centroid_offset);
         link_cluster_and_elements();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         draw_connections();
         draw_elements();
         cv::imshow(clust_window_name, image);
@@ -153,8 +151,6 @@ double Processor::update_centroids() noexcept {
             x += (*clust)->pos.first;
             y += (*clust)->pos.second;
         }
-        print_dots_stats();
-        print_cluster_stats();
         x /= iter->cluster.size();
         y /= iter->cluster.size();
         offset += abs(iter->pos.first - x) + abs(iter->pos.second - y);

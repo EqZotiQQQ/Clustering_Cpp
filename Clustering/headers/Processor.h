@@ -23,7 +23,7 @@ public:
     Processor(
         const int rows = 400, 
         const int columns = 700, 
-        const int cluster_cnt = 2, 
+        const int cluster_cnt = 5, 
         const RUN_TYPE type = RUN_TYPE::LATENCY_FLOW, 
         const std::string& window_name = "Clustering"
     );
