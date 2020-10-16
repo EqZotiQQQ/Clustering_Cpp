@@ -16,8 +16,8 @@ struct Dot {
     struct Centroid* owner;
     double centr_dist;
     void print() const {
-        if (owner) {
-            printf("[%d %d], %s", pos.first, pos.second, "Owner exists\n");
+        if (owner != nullptr) {
+            printf("[%d %d]. Owner exists\n", pos.first, pos.second);
         }
         else {
             printf("[%d %d], %s", pos.first, pos.second, "Owner doesn't exist\n");

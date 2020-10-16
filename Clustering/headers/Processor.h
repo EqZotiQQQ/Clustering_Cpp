@@ -13,34 +13,42 @@
 
 
 enum class RUN_TYPE {
-    STATIC = 0,     // place elements staticly 
-    LATENCY_FLOW = 1,    // u should place elements   
-    RANDOM = 2      // leave elements be automaticaly placed on the fields
+    REAL_TIME = 0,
+    LATENCY_FLOW = 1,
+    STATIC = 2
 };
 
 class Processor {
 public:
-    Processor(const int rows = 1000,
-                    const int columns = 1400,
-                    const int cluster_cnt = 20,
-                    const RUN_TYPE type = RUN_TYPE::LATENCY_FLOW,
-                    const std::string& window_name = "Clustering");
+    Processor(
+        const int rows = 400, 
+        const int columns = 700, 
+        const int cluster_cnt = 2, 
+        const RUN_TYPE type = RUN_TYPE::LATENCY_FLOW, 
+        const std::string& window_name = "Clustering"
+    );
     ~Processor();
-    void process() noexcept;
+    void launch() noexcept;
 private:
     void latency_flow() noexcept;
-    void print_dots() const noexcept;
-    void print_centoids_pos() const noexcept;
+    void static_flow() noexcept;
+    static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
     bool kmeans() noexcept;
+    bool kmeans_realtime() noexcept;
     void random_init_centroids() noexcept;
-    void calculate_distances() noexcept;
+    void link_cluster_and_elements() noexcept;
+    void link_first() noexcept;
     void draw_elements() const noexcept;
-    void print_connections() noexcept;
+    void draw_connections() noexcept;
     double update_centroids() noexcept;
+    void process_realtime(const int x, const int y) noexcept;
+
+    void print_dots_stats() const noexcept;
+    void print_cluster_stats() const noexcept;
 
     const std::string clust_window_name;
     cv::Mat image;
-    std::vector<Centroid> centroids;
+    std::vector<Centroid> clusters;
     std::vector<Dot> dots;
     RUN_TYPE run_type;
     int cluster_cnt;

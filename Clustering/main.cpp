@@ -3,6 +3,6 @@
 
 int main(int argc, char* argv[]) {
     Processor proc;
-    proc.process();
+    proc.launch();
     return 0;
 }

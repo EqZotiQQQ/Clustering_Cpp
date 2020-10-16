@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{82C6AE29-3B3C-4CEA-9988-3218915EA2CE}</ProjectGuid>
+    <ProjectGuid>{A40BB8F6-824B-4554-9D5C-3D96D412E552}</ProjectGuid>
     <RootNamespace>Clustering</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
