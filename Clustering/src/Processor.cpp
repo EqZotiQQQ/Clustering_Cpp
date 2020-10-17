@@ -189,7 +189,6 @@ void Processor::draw_elements() const noexcept {
     }
     for (const auto& centroid : clusters) {
         cv::rectangle(image, cv::Point(centroid.pos.first - 1, centroid.pos.second - 1), cv::Point(centroid.pos.first + 1, centroid.pos.second + 1), centroid.color);
-        //cv::circle(image, cv::Point(centroid.pos.first, centroid.pos.second), 3, centroid.color, -1, cv::LINE_AA);
     }
     cv::imshow(clust_window_name, image);
 }

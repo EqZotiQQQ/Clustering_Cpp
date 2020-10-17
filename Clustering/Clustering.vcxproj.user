@@ -4,10 +4,12 @@
     <LocalDebuggerEnvironment>PATH=C:\openCV_root\opencv\build\x64\vc15\bin
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-m=1 -r=320 -c=480 -k=4</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerEnvironment>PATH=C:\openCV_root\opencv\build\x64\vc15\bin
 $(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-m=1 -r=320 -c=480 -k=4</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

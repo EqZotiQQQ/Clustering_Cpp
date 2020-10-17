@@ -21,11 +21,11 @@ enum class RUN_TYPE {
 class Processor {
 public:
     Processor(
-        const int rows = 400, 
-        const int columns = 700, 
-        const int cluster_cnt = 5, 
-        const RUN_TYPE type = RUN_TYPE::REAL_TIME,
-        const std::string& window_name = "Clustering"
+        const int rows, 
+        const int columns, 
+        const int cluster_cnt, 
+        const RUN_TYPE type,
+        const std::string& window_name
     );
     ~Processor();
     void launch() noexcept;
@@ -40,7 +40,6 @@ private:
     void draw_connections() noexcept;
     double update_centroids() noexcept;
     void dot_generator() noexcept;
-    void process_realtime(const int x, const int y) noexcept;
 
     void print_dots_stats() const noexcept;
     void print_cluster_stats() const noexcept;
