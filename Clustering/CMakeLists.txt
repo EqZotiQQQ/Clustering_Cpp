@@ -4,6 +4,7 @@ project(Clustering)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
@@ -25,4 +26,4 @@ include_directories(
 
 add_executable(Clustering ${SOURCES} ${HEADERS})
 
-target_link_libraries( MST_openCV ${OpenCV_LIBS} )
+target_link_libraries( Clustering ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT} )

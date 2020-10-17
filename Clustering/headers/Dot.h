@@ -25,4 +25,4 @@ struct Dot {
     }
 };
 
-#endif DOT_H
+#endif // DOT_H
