@@ -14,8 +14,8 @@ struct Centroid {
     std::vector<Dot*> cluster;   // list of elements linked with this centroid
     cv::Scalar color;
     void print() const {
-        printf("Claster position:[%d %d]. Count of elements in cluster: %d\n", pos.first, pos.second, cluster.size());
+        printf("Claster position:[%d %d]. Count of elements in cluster: %ld\n", pos.first, pos.second, cluster.size());
     }
 };
 
-#endif CENTROID_H
+#endif // CENTROID_H
