@@ -26,7 +26,7 @@ void Processor::launch() noexcept {
     random_init_centroids();
     while (lunch_status) {
         if (run_type == RUN_TYPE::LATENCY_FLOW) {
-            worker = std::thread([this] {this->latency_flow(); });
+            worker = std::thread([this] {this->dot_generator(); });
             lunch_status = false;
         } else if (run_type == RUN_TYPE::REAL_TIME) {
             cv::setMouseCallback(clust_window_name, s_mouse_callback, this);
@@ -46,42 +46,33 @@ void Processor::launch() noexcept {
 void Processor::s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept {    /*param - image*/
     auto graph_processor = static_cast<Processor*>(param);
     if (event == cv::EVENT_LBUTTONDOWN) {
-        graph_processor->process_realtime(x, y);
+        graph_processor->latency_flow(x, y);
     }
 }
 
-void Processor::process_realtime(const int x, const int y) noexcept {
-    if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot & dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
-        return;
-    }
-    dots.push_back({ x, y });
-    std::cout << dots.size() << std::endl;
-    draw_elements();
-    if (dots.size() <= cluster_cnt) {
-        return;
-    }
-    kmeans_realtime();
-}
-
-
-void Processor::latency_flow() noexcept {
+void Processor::dot_generator() noexcept {
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, image.cols);
     std::uniform_int_distribution<> rand_cols(0, image.rows);
-    while(true) {
+    while (true) {
         int x = rand_rows(gen);
         int y = rand_cols(gen);
-        if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot & dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
-            continue;
-        }
-        dots.push_back({ x, y });
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-        if (dots.size() <= clusters.size()) {
-            continue;
-        }
-        kmeans_realtime();
+        latency_flow(x, y);
     }
+}
+
+void Processor::latency_flow(const int x, const int y) noexcept {
+    if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot& dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
+        return;
+    }
+    dots.push_back({ x, y });
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    if (dots.size() < clusters.size()) {
+        return;
+    }
+    kmeans_realtime();
+
 }
 
 void Processor::static_flow() noexcept {
