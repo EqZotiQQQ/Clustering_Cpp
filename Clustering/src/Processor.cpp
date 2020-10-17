@@ -23,9 +23,8 @@ void Processor::launch() noexcept {
     bool lunch_status{ true };
     cv::namedWindow(clust_window_name, cv::WINDOW_AUTOSIZE);
     cv::imshow(clust_window_name, image);
-
-    while (lunch_status) {  // main loop
-        std::cout << "worker" << (int)run_type << std::endl;
+    random_init_centroids();
+    while (lunch_status) {
         if (run_type == RUN_TYPE::LATENCY_FLOW) {
             worker = std::thread([this] {this->latency_flow(); });
             lunch_status = false;
@@ -61,12 +60,11 @@ void Processor::process_realtime(const int x, const int y) noexcept {
     if (dots.size() <= cluster_cnt) {
         return;
     }
-    kmeans();
+    kmeans_realtime();
 }
 
 
 void Processor::latency_flow() noexcept {
-    random_init_centroids();
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, image.cols);
@@ -86,26 +84,6 @@ void Processor::latency_flow() noexcept {
     }
 }
 
-bool Processor::kmeans_realtime() noexcept {
-    double epsilon = 1;
-    double centroid_offset;
-    link_cluster_and_elements();
-
-    do {
-        image = cv::Mat(image.rows, image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-        centroid_offset = update_centroids();
-        printf("offset = %f\n", centroid_offset);
-        link_cluster_and_elements();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        draw_connections();
-        draw_elements();
-        cv::imshow(clust_window_name, image);
-    } while (epsilon <= centroid_offset);
-    printf("offset = %f\n", centroid_offset);
-    return true;
-}
-
 void Processor::static_flow() noexcept {
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
@@ -114,31 +92,29 @@ void Processor::static_flow() noexcept {
     for (int i = 0; i < 500; ++i) {
         int x = rand_rows(gen);
         int y = rand_cols(gen);
-        if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot & dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
+        if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot& dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
             i--;
             std::cout << "skip\n";
             continue;
         }
         dots.push_back({ x, y });
     }
-    kmeans();
+    kmeans_realtime();
 }
 
-bool Processor::kmeans() noexcept {
-    random_init_centroids();
-    double epsilon = 1; // dunno tmp value.
-    double centroid_offset = -1;
+bool Processor::kmeans_realtime() noexcept {
+    double epsilon = 1;
+    double centroid_offset;
     link_cluster_and_elements();
-    while (epsilon <= centroid_offset || centroid_offset == -1) { // main process loop
+    do {
         image = cv::Mat(image.rows, image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-        printf("offset = %f\n", centroid_offset);
         centroid_offset = update_centroids();
+        printf("offset = %f\n", centroid_offset);
         link_cluster_and_elements();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        draw_connections();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         draw_elements();
         cv::imshow(clust_window_name, image);
-    }
+    } while (epsilon <= centroid_offset);
     printf("offset = %f\n", centroid_offset);
     return true;
 }
@@ -164,15 +140,15 @@ void Processor::random_init_centroids() noexcept {
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, image.cols);
     std::uniform_int_distribution<> rand_cols(0, image.rows);
+    std::uniform_int_distribution<> colors(30, 255);
     for (int i = 0; i < cluster_cnt; ++i) {
         int x = rand_rows(gen);
         int y = rand_cols(gen);
         if (std::find_if(clusters.cbegin(), clusters.cend(), [x = x, y = y](const Centroid& cent) {return cent.pos.first == x && cent.pos.second == y; }) != clusters.cend()) {
             i--;
-            std::cout << "skip\n";
             continue;
         }
-        clusters.push_back({ rand_rows(gen), rand_cols(gen) });
+        clusters.push_back({ rand_rows(gen), rand_cols(gen) , cv::Scalar(colors(gen), colors(gen), colors(gen)) });
     }
 }
 
@@ -195,7 +171,7 @@ void Processor::link_cluster_and_elements() noexcept {
         it_dot->centr_dist = min_distance;
         centroid->cluster.push_back(&(*it_dot));
     }
-    /*Make USSR Great again. Joke just its bad when cluster contains 0 elems.*/
+
     for (auto centroid = clusters.begin(); centroid != clusters.end(); ++centroid) {
         if (centroid->cluster.size() == 0) {
             double min_distance = -1;
@@ -218,10 +194,11 @@ void Processor::link_cluster_and_elements() noexcept {
 
 void Processor::draw_elements() const noexcept {
     for (const auto& dot : dots) {
-        cv::circle(image, cv::Point(dot.pos.first, dot.pos.second), 3, cv::Scalar(200, 250, 200), -1, cv::LINE_AA);
+        cv::circle(image, cv::Point(dot.pos.first, dot.pos.second), 3, dot.owner->color, -1, cv::LINE_AA);
     }
     for (const auto& centroid : clusters) {
-        cv::circle(image, cv::Point(centroid.pos.first, centroid.pos.second), 3, cv::Scalar(0, 0, 250), -1, cv::LINE_AA);
+        cv::rectangle(image, cv::Point(centroid.pos.first - 1, centroid.pos.second - 1), cv::Point(centroid.pos.first + 1, centroid.pos.second + 1), centroid.color);
+        //cv::circle(image, cv::Point(centroid.pos.first, centroid.pos.second), 3, centroid.color, -1, cv::LINE_AA);
     }
     cv::imshow(clust_window_name, image);
 }

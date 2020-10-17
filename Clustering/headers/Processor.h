@@ -33,7 +33,6 @@ private:
     void latency_flow() noexcept;
     void static_flow() noexcept;
     static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
-    bool kmeans() noexcept;
     bool kmeans_realtime() noexcept;
     void random_init_centroids() noexcept;
     void link_cluster_and_elements() noexcept;
