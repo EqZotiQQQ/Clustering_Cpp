@@ -80,12 +80,11 @@ void Processor::static_flow() noexcept {
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, image.cols);
     std::uniform_int_distribution<> rand_cols(0, image.rows);
-    for (int i = 0; i < 500; ++i) {
+    for (int i = 0; i < 500; ++i) { //todo make it ex. option
         int x = rand_rows(gen);
         int y = rand_cols(gen);
         if (std::find_if(dots.cbegin(), dots.cend(), [x = x, y = y](const Dot& dot) {return dot.pos.first == x && dot.pos.second == y; }) != dots.cend()) {
             i--;
-            std::cout << "skip\n";
             continue;
         }
         dots.push_back({ x, y });
@@ -100,13 +99,11 @@ bool Processor::kmeans_realtime() noexcept {
     do {
         image = cv::Mat(image.rows, image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
         centroid_offset = update_centroids();
-        printf("offset = %f\n", centroid_offset);
         link_cluster_and_elements();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         draw_elements();
         cv::imshow(clust_window_name, image);
     } while (epsilon <= centroid_offset);
-    printf("offset = %f\n", centroid_offset);
     return true;
 }
 
